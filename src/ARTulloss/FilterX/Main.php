@@ -9,6 +9,7 @@ use ARTulloss\FilterX\{Events\Listener,
     libs\PASVL\Traverser\FailReport,
     libs\PASVL\Traverser\VO\Traverser,
     libs\PASVL\ValidatorLocator\ValidatorLocator,
+    Queries\Queries,
     Session\SessionHandler};
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
