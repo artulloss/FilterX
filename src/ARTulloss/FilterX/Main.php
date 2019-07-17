@@ -81,6 +81,10 @@ class Main extends PluginBase {
         }
 
 	}
+	public function onDisable(): void{
+        if(isset($this->database))
+            $this->database->close();
+    }
     public function saveDefaultConfigs(): void{
         $this->saveDefaultConfig();
         // Create database config
