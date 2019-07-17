@@ -1,0 +1,13 @@
+Filtered Words:
+  - Test
+  - Swear
+Silent:
+  filter: true
+  soft_mute: true
+Infraction:
+  Mode: 2 # 1 or 2
+  Reset Every: 60 # seconds
+  Punishments:
+    5: "5 minutes" # seconds, hours, years, etc
+    10: "10 minutes"
+    15: "15 minutes"
