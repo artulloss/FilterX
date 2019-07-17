@@ -24,7 +24,7 @@ INSERT INTO filter_players (name) VALUES (:name);
 -- #     { soft_mutes
 -- #       :name string
 -- #       :until int
-INSERT INTO soft_mutes VALUES ((SELECT id FROM filter_players WHERE name = :name), :until) ON CONFLICT (id) DO UPDATE SET until = :until;
+REPLACE INTO soft_mutes VALUES ((SELECT id FROM filter_players WHERE name = :name), :until);
 -- #     }
 -- #   }
 -- #   { get

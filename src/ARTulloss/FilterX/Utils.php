@@ -50,9 +50,11 @@ class Utils {
 
     /**
      * @param $time
+     * @param string $past
+     * @param string $future
      * @return string
      */
-    static function time2str($time) {
+    static function time2str($time, $past = 'ago', $future = 'left') {
 
         $d[0] = [1,"second", "seconds"];
         $d[1] = [60,"minute", "minutes"];
@@ -78,7 +80,7 @@ class Utils {
             }
         }
 
-        $return .= ($diff > 0) ? "ago":"left";
+        $return .= ($diff > 0) ? $past : $future;
         return $return;
     }
     /**
