@@ -16,7 +16,6 @@ use pocketmine\Player;
 use pocketmine\utils\Utils as PMUtils;
 use Closure;
 use function time;
-use function var_dump;
 
 class SessionHandler {
     /** @var Main $plugin */

@@ -22,7 +22,6 @@ use pocketmine\utils\Config;
 use Exception;
 use pocketmine\utils\TextFormat;
 use function time;
-use function var_dump;
 use const PHP_INT_MAX;
 
 class Listener implements PMListener {
@@ -55,8 +54,8 @@ class Listener implements PMListener {
             $silentConfig = $this->config->get('Silent');
             $infractionConfig = $this->config->get('Infraction');
             if($hasFilteredWord) {
-                echo "\nSOFT FILTERED MESSAGE\n";
-                var_dump($infractionConfig);
+            //    echo "\nSOFT FILTERED MESSAGE\n";
+            //    var_dump($infractionConfig);
                 $session->incrementInfractions(($infractionConfig['Mode'] === 2) ? Utils::array_substr_count($filteredWords, $msg) : 1);
                 if(!$silentConfig['filter']) {
                     $player->sendMessage(TextFormat::RED . "Please rephrase your sentence!");
@@ -64,10 +63,10 @@ class Listener implements PMListener {
                 } else
                     $event->setRecipients([$player]);
             } elseif($session->isSoftMuted()) {
-                echo "\nSOFT MUTED MESSAGE\n";
+            //    echo "\nSOFT MUTED MESSAGE\n";
                 if(!$silentConfig['filter']) {
                     // It is safe to do getSoftMutedUntilHere because $session->isSoftMuted() would return false if it was null
-                    var_dump($until);
+                //    var_dump($until);
                     $untilStr = Utils::time2str($until);
                     $event->setCancelled();
                     $player->sendMessage(TextFormat::RED . "You are soft muted! For: $untilStr");
@@ -102,12 +101,10 @@ class Listener implements PMListener {
             // Reset infractions with timer
 
             if($timer->isDone()) {
-            //    echo "\nTIMER IS DONE\n";
                 foreach ((array)$handler->getAllSessions() as $session) {
                     $session->resetInfractions();
                     $session->resetPunishedAtThreshold();
                 }
-            //    echo "\nRESET ALL INFRACTIONS\n";
                 $timer->start();
             }
         }, $player, $msg);

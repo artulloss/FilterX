@@ -11,9 +11,7 @@ namespace ARTulloss\FilterX\Session;
 
 use Exception;
 use pocketmine\Player;
-use DateTime;
 use function time;
-use function var_dump;
 
 /**
  * Class Session
@@ -104,8 +102,8 @@ class Session {
      * @param int $by
      */
     public function incrementInfractions($by = 1): void{
-        echo "\nINFRACTIONS INCREMENTED\n";
-        var_dump($by);
+    //    echo "\nINFRACTIONS INCREMENTED\n";
+    //    var_dump($by);
         $this->infractions += $by;
     }
     public function resetInfractions(): void{
