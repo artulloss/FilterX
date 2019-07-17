@@ -1,4 +1,6 @@
 # FilterX
+[![](https://poggit.pmmp.io/shield.state/FilterX)](https://poggit.pmmp.io/p/FilterX)
+
 The next generation chat filter!
 # Features
 - Invisible filtering - By default the plugin will not make it apparent to players that things they say in chat are filtered, this is to encourage cleanliness in chat as most people won't know what they're saying is censored so they won't try to bypass the filter.
