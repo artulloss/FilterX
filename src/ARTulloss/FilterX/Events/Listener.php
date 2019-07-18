@@ -66,7 +66,6 @@ class Listener implements PMListener {
             //    echo "\nSOFT MUTED MESSAGE\n";
                 if(!$silentConfig['filter']) {
                     // It is safe to do getSoftMutedUntilHere because $session->isSoftMuted() would return false if it was null
-                //    var_dump($until);
                     $untilStr = Utils::time2str($until, 'ago', '');
                     $event->setCancelled();
                     $player->sendMessage(TextFormat::RED . "You are soft muted! For: $untilStr");
@@ -80,7 +79,6 @@ class Listener implements PMListener {
                 if(!$session->hasBeenPunishedAtThreshold($threshold) && $infractions >= $threshold) {
                     $session->addToSoftMutedTime($punishment);
                     $session->addToAlreadyPunishedInfraction($threshold);
-                    $session->resetInfractions();
                     break;
                 }
             }
