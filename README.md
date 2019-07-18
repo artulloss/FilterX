@@ -11,7 +11,7 @@ The next generation chat filter!
 # Installation
 
 1. Download the latest build from here https://poggit.pmmp.io/ci/artulloss/FilterX/
-2. Configure the plugin to your liking. For the database SQLite will work great for 1 server and MySQL will work for multiple servers. If you want to test the filter out I reccomend switching the invisible options off then back on when you're ready to use it, or use a seperate device to confirm if the messages are blocked.
+2. Configure the plugin to your liking. For the database SQLite will work great for 1 server and MySQL will work for multiple servers. If you want to test the filter out I recommend switching the invisible options off then back on when you're ready to use it, or use a separate device to confirm if the messages are blocked.
 3. If you run into any issues with the plugin open an issue and I'll try to get back to you within several hours.
 
 **Made with ❤️ by Adam**
