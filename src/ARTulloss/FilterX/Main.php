@@ -80,7 +80,6 @@ class Main extends PluginBase {
             }
             $this->timer = new Timer($resetEverySeconds);
         }
-
 	}
 	public function onDisable(): void{
         if(isset($this->database))

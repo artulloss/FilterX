@@ -12,7 +12,7 @@ namespace ARTulloss\FilterX\Session;
 use ARTulloss\FilterX\Main;
 use ARTulloss\FilterX\Queries\Queries;
 use ARTulloss\FilterX\Utils;
-use pocketmine\Player;
+use pocketmine\Player\Player;
 use pocketmine\utils\Utils as PMUtils;
 use Closure;
 use function time;
@@ -66,7 +66,7 @@ class SessionHandler {
             //    var_dump($result);
                 if($result !== [])
                     $session->setSoftMutedFor($result[0]['until'] > time() ? $result[0]['until'] : null);
-                $this->sessions[$player->getLowerCaseName()] = $session;
+                $this->sessions[$player->getName()] = $session;
                 $passTo($session);
             }, $onError);
         };
@@ -112,7 +112,7 @@ class SessionHandler {
      * @return Session|null
      */
     public function getSession(Player $player): ?Session{
-        return $this->sessions[$player->getLowerCaseName()] ?? null;
+        return $this->sessions[$player->getName()] ?? null;
     }
     /**
      * @return Session[]|null
