@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace ARTulloss\FilterX\Session;
 
 use Exception;
-use pocketmine\Player;
+use pocketmine\Player\Player;
 use function time;
 
 /**

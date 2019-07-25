@@ -1,7 +1,7 @@
 name: FilterX
 main: ARTulloss\FilterX\Main
 version: 1.0.0
-api: 3.0.0
+api: 4.0.0
 author: ARTulloss
 description: The next generation chat filter
 website: https://github.com/artulloss
