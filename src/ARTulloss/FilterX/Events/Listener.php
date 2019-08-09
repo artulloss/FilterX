@@ -12,7 +12,6 @@ namespace ARTulloss\FilterX\Events;
 use ARTulloss\FilterX\Main;
 use ARTulloss\FilterX\Queries\Queries;
 use ARTulloss\FilterX\Session\Session;
-use ARTulloss\FilterX\Timer;
 use ARTulloss\FilterX\Utils;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\Listener as PMListener;

@@ -26,8 +26,6 @@ class Main extends PluginBase {
 
     /** @var SessionHandler $sessionHandler */
     private $sessionHandler;
-    /** @var Timer $timer */
-    private $timer;
     /** @var DataConnector $database */
     private $database;
     /** @var int[] $infractionLengths */
@@ -84,8 +82,8 @@ class Main extends PluginBase {
             if($resetEverySeconds <= 0) {
                 $resetEverySeconds = 60;
                 $this->getLogger()->error("'Infractions.Expire After' can't be set as equal to or less than 0. Using default value of 60 seconds.");
+                $this->getConfig()->setNested('Infraction.Expire After', $resetEverySeconds);
             }
-            $this->timer = new Timer($resetEverySeconds);
             $this->registerFilters();
         }
 
@@ -175,7 +173,6 @@ class Main extends PluginBase {
      */
     public function resolveTimeLengths(): void{
         $infractionStringLengths = $this->getConfig()->getNested('Infraction.Punishments');
-    //    var_dump($infractionStringLengths);
         foreach ($infractionStringLengths as $infractions => $length)
             $this->infractionLengths[$infractions] = strtotime($length, 0);
         arsort($this->infractionLengths);
@@ -187,14 +184,6 @@ class Main extends PluginBase {
         if(!isset($this->sessionHandler))
             throw new RuntimeException('The get session handler function should only be called after the plugin has been enabled!');
         return $this->sessionHandler;
-    }
-    /**
-     * @return Timer
-     */
-    public function getTimer(): Timer{
-        if(!isset($this->timer))
-            throw new RuntimeException('The get timer function should only be called after the plugin has been enabled!');
-        return $this->timer;
     }
     /**
      * @return DataConnector
