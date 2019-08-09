@@ -59,7 +59,6 @@ class Listener implements PMListener {
                 } else
                     $this->handleEvent($event);
             } elseif($session->isSoftMuted()) {
-            //    echo "\nSOFT MUTED MESSAGE\n";
                 if(!$silentConfig['filter']) {
                     // It is safe to do getSoftMutedUntilHere because $session->isSoftMuted() would return false if it was null
                     $untilStr = Utils::time2str($until, 'ago', '');
@@ -75,17 +74,12 @@ class Listener implements PMListener {
             // *These are sorted from highest to lowest severity which is why this code works*
             foreach ($infractionPunishments as $threshold => $punishment) {
                 if($infractions >= $threshold) {
-                    echo "\nADDED $punishment\n";
                     $session->addToSoftMutedTime($punishment);
                     $session->removeInfractions($threshold);
                     break;
                 }
             }
             $until = $session->getSoftMutedUntil();
-        //    echo "\nUNTIL\n";
-        //    var_dump($until);
-        //    echo "\nNOW\n";
-        //    var_dump(time());
             if(($until ?? PHP_INT_MAX) < time()) {
                 $name = $player->getName();
                 $session->setSoftMutedFor(null);
