@@ -23,7 +23,6 @@ use Exception;
 use pocketmine\utils\TextFormat;
 use function time;
 use const PHP_INT_MAX;
-use function var_dump;
 
 class Listener implements PMListener {
     /** @var Main $plugin */
@@ -53,7 +52,6 @@ class Listener implements PMListener {
             $silentConfig = $this->config->get('Silent');
             $isFiltered = false;
             $infractions = $this->plugin->checkAllFilters($msg, $isFiltered);
-            var_dump($infractions);
             if($isFiltered) {
                 if(!$silentConfig['filter']) {
                     $player->sendMessage(TextFormat::RED . "Please rephrase your sentence!");

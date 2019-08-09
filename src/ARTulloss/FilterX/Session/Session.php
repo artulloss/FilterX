@@ -109,7 +109,6 @@ class Session {
         isset($this->infractions[$time])
             ? $this->infractions[$time] += $by
             : $this->infractions[$time] = $by;
-        var_dump($this->infractions);
     }
     public function removeExpiredInfractions(): void{
     //    echo "\nINFRACTIONS RESET\n";
