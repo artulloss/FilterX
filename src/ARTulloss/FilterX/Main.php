@@ -6,6 +6,9 @@ namespace ARTulloss\FilterX;
 
 use function arsort;
 use ARTulloss\FilterX\{Events\Listener,
+    Filters\BaseFilter,
+    Filters\IPAddressFilter,
+    Filters\WordExistsFilter,
     libs\PASVL\Traverser\FailReport,
     libs\PASVL\Traverser\VO\Traverser,
     libs\PASVL\ValidatorLocator\ValidatorLocator,
@@ -16,6 +19,7 @@ use pocketmine\utils\Config;
 use poggit\libasynql\DataConnector;
 use poggit\libasynql\libasynql;
 use RuntimeException;
+use function spl_object_id;
 use function strtotime;
 
 class Main extends PluginBase {
@@ -30,6 +34,8 @@ class Main extends PluginBase {
     private $infractionLengths;
     /** @var Config $databaseConfig */
     private $databaseConfig;
+    /** @var BaseFilter[] $filters */
+    private $filters;
 
     private const CONFIG_PATTERN = [
         'Filtered Words' => [
@@ -40,8 +46,9 @@ class Main extends PluginBase {
             'soft_mute' => ':bool'
         ],
         'Infraction' => [
-            'Mode' => ':int :between(1,2)',
-            'Reset Every' => ':int', # seconds
+            'Word Mode' => ':string :regexp(/^count|boole?a?n?$/i)',
+            'IP Filter' => ':int', # infractions
+            'Expire After' => ':int', # seconds
             'Punishments' => [
                 '*' => ':string :regexp(/^(?:[0-9]+ \)(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?\)$/i)'
             ]
@@ -54,14 +61,13 @@ class Main extends PluginBase {
             'file' => ':string :regexp(/^.*\.sqlite$/)'
         ],
         'mysql' => [
-            'host' => ':string :regexp(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\)\.\){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\)$/)',
+            'host' => ':string :regexp(/^((25[0-5]|2[0-4]  [0-9]|[01]?[0-9][0-9]?\)\.\){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\)$/)',
             'username' => ':string',
             'password' => ':string',
             'schema' => ':string'
         ],
         'worker-limit' => ':int :min(1)'
     ];
-
     /**
      * @throws \Exception
      */
@@ -73,12 +79,13 @@ class Main extends PluginBase {
             $this->resolveTimeLengths();
             $this->getServer()->getPluginManager()->registerEvents(new Listener($this), $this);
             $this->sessionHandler = new SessionHandler($this);
-            $resetEverySeconds = (int) $this->getConfig()->getNested('Infraction.Reset Every');
+            $resetEverySeconds = (int) $this->getConfig()->getNested('Infraction.Expire After');
             if($resetEverySeconds <= 0) {
-                $resetEverySeconds = self::CONFIG_PATTERN['Infraction']['Reset Every'];
-                $this->getLogger()->error("'Infractions Reset Every' can't be set as equal to or less than 0. Using default of $resetEverySeconds.");
+                $resetEverySeconds = 60;
+                $this->getLogger()->error("'Infractions.Expire After' can't be set as equal to or less than 0. Using default value of 60 seconds.");
             }
             $this->timer = new Timer($resetEverySeconds);
+            $this->registerFilters();
         }
 
 	}
@@ -97,18 +104,25 @@ class Main extends PluginBase {
      * Check if the config is valid
      */
     public function checkConfigsValid(): void{
-        $traverser = new Traverser(new ValidatorLocator());
-        try {
-            # TODO Maybe do this by file so it's easier to know which file is broken- but the configs are rather small...
-            $traverser->match(self::CONFIG_PATTERN, $this->getConfig()->getAll());
-            $traverser->match(self::DATABASE_PATTERN, $this->databaseConfig->getAll());
-        } catch (FailReport $report) {
+        $catchFunction = function (string $file, FailReport $report): void{
             $logger = $this->getLogger();
-            $logger->error('Invalid config detected! Reason:');
-            Utils::outputFailReasons($this, $report);
+            $reason = Utils::getFailReason($report);
+            $logger->error("Invalid $file detected! Reason: $reason");
             $logger->error('Disabling...');
             $this->getServer()->getPluginManager()->disablePlugin($this);
+        };
+        $traverser = new Traverser(new ValidatorLocator());
+        try {
+            $traverser->match(self::CONFIG_PATTERN, $this->getConfig()->getAll());
+        } catch (FailReport $report) {
+            $catchFunction('config.yml', $report);
         }
+        try {
+            $traverser->match(self::DATABASE_PATTERN, $this->databaseConfig->getAll());
+        } catch (FailReport $report) {
+            $catchFunction('database.yml', $report);
+        }
+
     }
 	public function startDatabase(): void{
         $this->database = libasynql::create($this, $this->databaseConfig->getAll(), [
@@ -118,6 +132,42 @@ class Main extends PluginBase {
         $this->database->executeGeneric(Queries::FILTER_CREATE_PLAYERS, [], null, Utils::getOnError($this));
         $this->database->executeGeneric(Queries::FILTER_CREATE_SOFT_MUTES, [], null, Utils::getOnError($this));
         $this->database->waitAll();
+    }
+    public function registerFilters(): void{
+        $cfg = $this->getConfig()->getAll();
+        foreach ([new IPAddressFilter($cfg['Infraction']['IP Filter']), new WordExistsFilter($cfg['Infraction']['Word Mode'], $cfg['Filtered Words'])] as $filter)
+            $this->registerFilter($filter);
+    }
+    /**
+     * @param BaseFilter $filter
+     */
+    public function registerFilter(BaseFilter $filter): void{
+        $this->filters[spl_object_id($filter)] = $filter;
+    }
+    /**
+     * @param BaseFilter $filter
+     */
+    public function deRegisterFilter(BaseFilter $filter): void{
+        unset($this->filters[spl_object_id($filter)]);
+    }
+    /**
+     * @return BaseFilter[]
+     */
+    public function getFilters(): array{
+        return $this->filters;
+    }
+    /**
+     * @param string $sentence
+     * @param $isFiltered
+     * @return int
+     */
+    public function checkAllFilters(string $sentence, bool &$isFiltered = false): int{
+        $sum = 0;
+        foreach ($this->getFilters() as $filter) {
+            $sum += $filter->countViolations($sentence);
+        }
+        $isFiltered = $sum > 0;
+        return $sum;
     }
     /**
      * @throws \Exception

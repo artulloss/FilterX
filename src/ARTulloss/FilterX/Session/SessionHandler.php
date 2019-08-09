@@ -57,8 +57,7 @@ class SessionHandler {
         $name = $player->getName();
         $onError = Utils::getOnError($this->plugin);
 
-        $whenDone = function (Closure $passTo, Session $session, int $id) use ($database, $player, $name, $onError): void{
-            $session->setId($id);
+        $whenDone = function (Closure $passTo, Session $session) use ($database, $player, $name, $onError): void{
             $database->executeSelect(Queries::FILTER_GET_SOFT_MUTES, [
                 'name' => $name
             ], function (array $result) use ($passTo, $player, $session): void{
@@ -77,9 +76,7 @@ class SessionHandler {
         //    echo "\nDATABASE RESULT GET PLAYER\n";
         //    var_dump($result);
             if($result !== [] && isset($result[0])) {
-                $result = $result[0];
-                $id = $result['id'];
-                $whenDone($passTo, $session, $id);
+                $whenDone($passTo, $session);
             } else {
                 $database->executeInsert(Queries::FILTER_INSERT_PLAYERS, [
                     'name' => $name

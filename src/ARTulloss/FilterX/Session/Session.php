@@ -11,7 +11,9 @@ namespace ARTulloss\FilterX\Session;
 
 use Exception;
 use pocketmine\Player;
-use function time;
+use function var_dump;
+use function array_keys;
+use function array_sum;
 
 /**
  * Class Session
@@ -24,14 +26,12 @@ class Session {
     private $lastMessage;
     /** @var int|null $softMuted */
     private $softMuted;
-    /** @var int $infractions */
+    /** @var int[] $infractions */
     private $infractions;
     /** @var int[] $alreadyPunishedInfractions */
     private $alreadyPunishedInfractions = [];
     /** @var $player */
     private $player;
-    /** @var int $id */
-    private $id;
     /**
      * Session constructor.
      * @param Player $player
@@ -103,31 +103,29 @@ class Session {
      */
     public function incrementInfractions($by = 1): void{
     //    echo "\nINFRACTIONS INCREMENTED\n";
-    //    var_dump($by);
-        $this->infractions += $by;
+        if($by === 0)
+            return;
+        $time = time();
+        isset($this->infractions[$time])
+            ? $this->infractions[$time] += $by
+            : $this->infractions[$time] = $by;
+        var_dump($this->infractions);
     }
-    public function resetInfractions(): void{
+    public function removeExpiredInfractions(): void{
     //    echo "\nINFRACTIONS RESET\n";
-        $this->infractions = 0;
+        $now = time();
+        $expire = $this->getPlayer()->getServer()->getPluginManager()->getPlugin('FilterX')->getConfig()->getNested('Infraction.Expire After');
+        foreach (array_keys((array)$this->infractions) as $time) {
+            if($now - $time > $expire) {
+                unset($this->infractions[$time]);
+            }
+        }
     }
     /**
      * @return int
      */
     public function getInfractions(): int{
-        return $this->infractions ?? 0;
-    }
-    /**
-     * Must be called after creation
-     * @param int $id
-     */
-    public function setId(int $id): void{
-        $this->id = $id;
-    }
-    /**
-     * @return int|null
-     */
-    public function getId(): ?int{
-        return $this->id;
+        return array_sum($this->infractions ?? []);
     }
     /**
      * @return Player

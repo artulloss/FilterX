@@ -12,7 +12,9 @@ namespace ARTulloss\FilterX;
 use ARTulloss\FilterX\libs\PASVL\Traverser\FailReport;
 use pocketmine\plugin\Plugin;
 use pocketmine\Server;
+use pocketmine\utils\TextFormat;
 use function strtolower;
+use function implode;
 use Throwable;
 use Closure;
 
@@ -47,7 +49,6 @@ class Utils {
             $i += substr_count($haystack, strtolower($needle));
         return $i;
     }
-
     /**
      * @param $time
      * @param string $past
@@ -93,14 +94,19 @@ class Utils {
             $hasLogger->getLogger()->logException($error);
         };
     }
-    static function outputFailReasons(Plugin $plugin, FailReport $report): void{
-        $logger = $plugin->getLogger();
+    /**
+     * @param FailReport $report
+     * @return string
+     */
+    static function getFailReason(FailReport $report): string{
         $reason = $report->getReason();
+        $reasonArray = [];
         if($reason->isKeyQuantityType())
-            $logger->error('Invalid key quantity found!');
+            $reasonArray[] = 'Invalid key quantity found!';
         if($reason->isKeyType())
-            $logger->error('Invalid key type found!');
+            $reasonArray[] = 'Invalid key type found!';
         if($reason->isValueType())
-            $logger->error('Invalid value type found!');
+            $reasonArray[] = 'Invalid value type found!';
+        return implode(TextFormat::EOL, $reasonArray);
     }
 }

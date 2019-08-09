@@ -23,6 +23,7 @@ use Exception;
 use pocketmine\utils\TextFormat;
 use function time;
 use const PHP_INT_MAX;
+use function var_dump;
 
 class Listener implements PMListener {
     /** @var Main $plugin */
@@ -49,14 +50,11 @@ class Listener implements PMListener {
         $handler = $this->plugin->getSessionHandler();
         $handler->passSession(function (Session $session) use ($event, $handler, $player, $timer, $msg): void{
             $until = $session->getSoftMutedUntil();
-            $filteredWords = $this->config->get('Filtered Words', []);
-            $hasFilteredWord = Utils::striExists($filteredWords, $msg);
             $silentConfig = $this->config->get('Silent');
-            $infractionConfig = $this->config->get('Infraction');
-            if($hasFilteredWord) {
-            //    echo "\nSOFT FILTERED MESSAGE\n";
-            //    var_dump($infractionConfig);
-                $session->incrementInfractions(($infractionConfig['Mode'] === 2) ? Utils::array_substr_count($filteredWords, $msg) : 1);
+            $isFiltered = false;
+            $infractions = $this->plugin->checkAllFilters($msg, $isFiltered);
+            var_dump($infractions);
+            if($isFiltered) {
                 if(!$silentConfig['filter']) {
                     $player->sendMessage(TextFormat::RED . "Please rephrase your sentence!");
                     $event->setCancelled();
@@ -72,6 +70,8 @@ class Listener implements PMListener {
                 } else
                     $event->setRecipients([$player]);
             }
+            $session->removeExpiredInfractions();
+            $session->incrementInfractions($infractions);
             $infractions = $session->getInfractions();
             $infractionPunishments = $this->plugin->getInfractionLengths();
             // *These are sorted from highest to lowest severity which is why this code works*
@@ -100,7 +100,6 @@ class Listener implements PMListener {
 
             if($timer->isDone()) {
                 foreach ((array)$handler->getAllSessions() as $session) {
-                    $session->resetInfractions();
                     $session->resetPunishedAtThreshold();
                 }
                 $timer->start();
