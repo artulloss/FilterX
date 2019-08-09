@@ -21,6 +21,7 @@ use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use Exception;
 use pocketmine\utils\TextFormat;
+use function str_replace;
 use function time;
 use const PHP_INT_MAX;
 
@@ -39,15 +40,13 @@ class Listener implements PMListener {
     }
     /**
      * @param PlayerChatEvent $event
+     * @priority HIGH
      */
     public function onChat(PlayerChatEvent $event): void{
-        $timer = $this->plugin->getTimer();
-        if($timer->getState() === Timer::STATE_STOPPED)
-            $timer->start();
         $player = $event->getPlayer();
         $msg = $event->getMessage();
         $handler = $this->plugin->getSessionHandler();
-        $handler->passSession(function (Session $session) use ($event, $handler, $player, $timer, $msg): void{
+        $handler->passSession(function (Session $session) use ($event, $handler, $player, $msg): void{
             $until = $session->getSoftMutedUntil();
             $silentConfig = $this->config->get('Silent');
             $isFiltered = false;
@@ -56,8 +55,9 @@ class Listener implements PMListener {
                 if(!$silentConfig['filter']) {
                     $player->sendMessage(TextFormat::RED . "Please rephrase your sentence!");
                     $event->setCancelled();
+                    $this->broadcastToStaff($event);
                 } else
-                    $event->setRecipients([$player]);
+                    $this->handleEvent($event);
             } elseif($session->isSoftMuted()) {
             //    echo "\nSOFT MUTED MESSAGE\n";
                 if(!$silentConfig['filter']) {
@@ -66,17 +66,18 @@ class Listener implements PMListener {
                     $event->setCancelled();
                     $player->sendMessage(TextFormat::RED . "You are soft muted! For: $untilStr");
                 } else
-                    $event->setRecipients([$player]);
+                    $this->handleEvent($event);
             }
-            $session->removeExpiredInfractions();
+            $session->removeExpiredInfractions($this->config->getNested('Infraction.Expire After'));
             $session->incrementInfractions($infractions);
             $infractions = $session->getInfractions();
             $infractionPunishments = $this->plugin->getInfractionLengths();
             // *These are sorted from highest to lowest severity which is why this code works*
             foreach ($infractionPunishments as $threshold => $punishment) {
-                if(!$session->hasBeenPunishedAtThreshold($threshold) && $infractions >= $threshold) {
+                if($infractions >= $threshold) {
+                    echo "\nADDED $punishment\n";
                     $session->addToSoftMutedTime($punishment);
-                    $session->addToAlreadyPunishedInfraction($threshold);
+                    $session->removeInfractions($threshold);
                     break;
                 }
             }
@@ -90,17 +91,7 @@ class Listener implements PMListener {
                 $session->setSoftMutedFor(null);
                 $this->plugin->getDatabase()->executeChange(Queries::FILTER_DELETE_SOFT_MUTE, ['name' => $player->getName()], function (int $rows) use ($name, $session): void{
                     $this->plugin->getLogger()->info("Soft mute expired for $name. $rows row(s) changed.");
-                    $session->resetPunishedAtThreshold();
                 });
-            }
-
-            // Reset infractions with timer
-
-            if($timer->isDone()) {
-                foreach ((array)$handler->getAllSessions() as $session) {
-                    $session->resetPunishedAtThreshold();
-                }
-                $timer->start();
             }
         }, $player, $msg);
     }
@@ -119,5 +110,21 @@ class Listener implements PMListener {
             ]);
         }
         $handler->deleteSession($player);
+    }
+    /**
+     * @param PlayerChatEvent $event
+     */
+    private function handleEvent(PlayerChatEvent $event): void{
+        $player = $event->getPlayer();
+        $event->setRecipients([$player]);
+        $this->broadcastToStaff($event);
+    }
+    /**
+     * @param PlayerChatEvent $event
+     */
+    private function broadcastToStaff(PlayerChatEvent $event): void{
+        $staffChat = $this->plugin->getServer()->getPluginManager()->getPlugin('StaffChat');
+        if($staffChat !== null)
+            $staffChat->pluginBroadcast($this->plugin->getName(), $event->getMessage(), str_replace('%player%', $event->getPlayer()->getName(), $this->config->get('Staff Chat Format')));
     }
 }

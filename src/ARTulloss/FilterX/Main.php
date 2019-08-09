@@ -52,7 +52,8 @@ class Main extends PluginBase {
             'Punishments' => [
                 '*' => ':string :regexp(/^(?:[0-9]+ \)(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?\)$/i)'
             ]
-        ]
+        ],
+        'Staff Chat Format' => ':string'
     ];
 
     private const DATABASE_PATTERN = [

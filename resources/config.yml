@@ -6,9 +6,11 @@ Silent:
   soft_mute: true
 Infraction:
   Word Mode: Count # violations and make that the infractions that are added or Bool, add an infraction if the sentence has at least one violation
-  IP Filter: 10 # infractions for an IP, 0 to disable
+  IP Filter: 15 # infractions for an IP, 0 to disable
   Expire After: 60 # seconds
   Punishments:
-    5: "5 minutes" # seconds, hours, years, etc
-    10: "10 minutes"
-    15: "15 minutes"
+    5: "10 minutes" # seconds, hours, years, etc
+    10: "20 minutes"
+    15: "30 minutes"
+    20: "60 minutes"
+Staff Chat Format: [%plugin%] [%player%] » %msg%

@@ -11,7 +11,6 @@ namespace ARTulloss\FilterX\Session;
 
 use Exception;
 use pocketmine\Player;
-use function var_dump;
 use function array_keys;
 use function array_sum;
 
@@ -28,8 +27,6 @@ class Session {
     private $softMuted;
     /** @var int[] $infractions */
     private $infractions;
-    /** @var int[] $alreadyPunishedInfractions */
-    private $alreadyPunishedInfractions = [];
     /** @var $player */
     private $player;
     /**
@@ -72,19 +69,6 @@ class Session {
     public function getSoftMutedUntil(): ?int{
         return $this->softMuted;
     }
-    public function addToAlreadyPunishedInfraction(int $threshold): void{
-        $this->alreadyPunishedInfractions[$threshold] = true;
-    }
-    /**
-     * @param int $threshold
-     * @return bool
-     */
-    public function hasBeenPunishedAtThreshold(int $threshold): bool{
-        return isset($this->alreadyPunishedInfractions[$threshold]);
-    }
-    public function resetPunishedAtThreshold(): void{
-        $this->alreadyPunishedInfractions = [];
-    }
     /**
      * @param string $lastMessage
      */
@@ -110,12 +94,25 @@ class Session {
             ? $this->infractions[$time] += $by
             : $this->infractions[$time] = $by;
     }
-    public function removeExpiredInfractions(): void{
+    public function removeInfractions(int $count): void{
+        foreach ($this->infractions as $key => $infractions) {
+            if($infractions < $count) {
+                unset($this->infractions[$key]);
+                $count -= $infractions;
+            } else {
+                $this->infractions[$key] -= $count;
+                break;
+            }
+        }
+    }
+    /**
+     * @param int $expireTime
+     */
+    public function removeExpiredInfractions(int $expireTime): void{
     //    echo "\nINFRACTIONS RESET\n";
         $now = time();
-        $expire = $this->getPlayer()->getServer()->getPluginManager()->getPlugin('FilterX')->getConfig()->getNested('Infraction.Expire After');
         foreach (array_keys((array)$this->infractions) as $time) {
-            if($now - $time > $expire) {
+            if($now - $time > $expireTime) {
                 unset($this->infractions[$time]);
             }
         }
