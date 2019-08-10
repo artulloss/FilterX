@@ -30,7 +30,7 @@ class Utils {
      * @param string $haystack
      * @return bool
      */
-    static function striExists(array $needles, string $haystack): bool{
+    public static function striExists(array $needles, string $haystack): bool{
         foreach ($needles as $needle) {
             if(stripos($haystack, $needle) !== false)
                 return true;
@@ -42,7 +42,7 @@ class Utils {
      * @param string $haystack
      * @return int
      */
-    static function array_substr_count(array $needles, string $haystack): int{
+    public static function array_substr_count(array $needles, string $haystack): int{
         $i = 0;
         $haystack = strtolower($haystack);
         foreach ($needles as $needle)
@@ -55,7 +55,7 @@ class Utils {
      * @param string $future
      * @return string
      */
-    static function time2str($time, $past = 'ago', $future = 'left') {
+    public static function time2str($time, $past = 'ago', $future = 'left') {
 
         $d[0] = [1,"second", "seconds"];
         $d[1] = [60,"minute", "minutes"];
@@ -88,7 +88,7 @@ class Utils {
      * @param Plugin|null $plugin
      * @return Closure
      */
-    static function getOnError(Plugin $plugin = null): Closure{
+    public static function getOnError(Plugin $plugin = null): Closure{
         return function (Throwable $error) use ($plugin): void{
             $hasLogger = $plugin !== null ? $plugin : Server::getInstance();
             $hasLogger->getLogger()->logException($error);
@@ -98,7 +98,7 @@ class Utils {
      * @param FailReport $report
      * @return string
      */
-    static function getFailReason(FailReport $report): string{
+    public static function getFailReason(FailReport $report): string{
         $reason = $report->getReason();
         $reasonArray = [];
         if($reason->isKeyQuantityType())

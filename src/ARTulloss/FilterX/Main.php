@@ -51,7 +51,8 @@ class Main extends PluginBase {
                 '*' => ':string :regexp(/^(?:[0-9]+ \)(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?\)$/i)'
             ]
         ],
-        'Staff Chat Format' => ':string'
+        'Staff Chat Format' => ':string', # :regexp(/.*(?:%msg%|%player%|%plugin%).*/i)
+        'Block Malicious Messages' => ':bool'
     ];
 
     private const DATABASE_PATTERN = [

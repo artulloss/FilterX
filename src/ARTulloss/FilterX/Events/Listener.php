@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace ARTulloss\FilterX\Events;
 
+use function array_diff;
 use ARTulloss\FilterX\Main;
 use ARTulloss\FilterX\Queries\Queries;
 use ARTulloss\FilterX\Session\Session;
@@ -46,6 +47,11 @@ class Listener implements PMListener {
         $msg = $event->getMessage();
         $handler = $this->plugin->getSessionHandler();
         $handler->passSession(function (Session $session) use ($event, $handler, $player, $msg): void{
+            // Clean the string to prevent crashing players etc
+            if($this->config->get('Block Malicious Messages')) {
+                $msg = TextFormat::clean($msg, false);
+                $event->setMessage($msg);
+            }
             $until = $session->getSoftMutedUntil();
             $silentConfig = $this->config->get('Silent');
             $isFiltered = false;
