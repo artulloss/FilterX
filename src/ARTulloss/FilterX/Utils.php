@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace ARTulloss\FilterX;
 
 use ARTulloss\FilterX\libs\PASVL\Traverser\FailReport;
+use pocketmine\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
@@ -108,5 +109,51 @@ class Utils {
         if($reason->isValueType())
             $reasonArray[] = 'Invalid value type found!';
         return implode(TextFormat::EOL, $reasonArray);
+    }
+
+    /**
+     * Get a player name as best as possible with support for disguises
+     * @param string $name
+     * @return null|Player
+     */
+    static public function getPlayer(string $name): ?Player{
+        $player = self::getDisguisedPlayerExact($name);
+        if($player === null)
+            $player = static::getDisguisedPlayer($name);
+        return $player;
+    }
+    /**
+     * Will work regardless of if they are disguised
+     * @param string $name
+     * @return null|Player
+     */
+    static public function getDisguisedPlayer(string $name): ?Player{
+        $found = null;
+        $name = strtolower($name);
+        $delta = PHP_INT_MAX;
+        foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+            $displayName = $player->getDisplayName();
+            if(stripos($displayName, $name) === 0) {
+                $curDelta = strlen($displayName) - strlen($name);
+                if($curDelta < $delta){
+                    $found = $player;
+                    $delta = $curDelta;
+                }
+                if($curDelta === 0)
+                    break;
+            }
+        }
+        return $found;
+    }
+    /**
+     * Will work regardless of if they are disguised
+     * @param string $name
+     * @return null|Player
+     */
+    static public function getDisguisedPlayerExact(string $name): ?Player{
+        foreach (Server::getInstance()->getOnlinePlayers() as $player)
+            if($player->getDisplayName() === $name)
+                return $player;
+        return null;
     }
 }

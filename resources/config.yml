@@ -13,5 +13,5 @@ Infraction:
     10: "20 minutes"
     15: "30 minutes"
     20: "60 minutes"
-Staff Chat Format: [%plugin%] [%player%] » %msg%
+Staff Chat Format: "[%plugin%] [%player%] » %msg%"
 Block Malicious Messages: true

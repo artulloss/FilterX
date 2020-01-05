@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace ARTulloss\FilterX;
 
 use function arsort;
-use ARTulloss\FilterX\{Events\Listener,
+use ARTulloss\FilterX\{Commands\TellCommand,
+    Events\Listener,
     Filters\BaseFilter,
     Filters\IPAddressFilter,
     Filters\WordExistsFilter,
@@ -86,6 +87,14 @@ class Main extends PluginBase {
                 $this->getConfig()->setNested('Infraction.Expire After', $resetEverySeconds);
             }
             $this->registerFilters();
+            $logger = $this->getLogger();
+            $map = $this->getServer()->getCommandMap();
+            $tell = $map->getCommand('tell');
+            if($tell !== null) {
+                $logger->info($map->unregister($tell) ? "Removed default tell command" : "Failed to remove default tell command");
+            } else
+                $logger->info("Failed to remove default tell command");
+            $logger->info($map->register('', new TellCommand('tell')) ? "Registered modified tell command" : "Failed to register modified tell command");
         }
 
 	}

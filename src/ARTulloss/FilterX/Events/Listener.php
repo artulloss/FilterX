@@ -9,21 +9,22 @@ declare(strict_types=1);
 
 namespace ARTulloss\FilterX\Events;
 
-use function array_diff;
 use ARTulloss\FilterX\Main;
 use ARTulloss\FilterX\Queries\Queries;
 use ARTulloss\FilterX\Session\Session;
 use ARTulloss\FilterX\Utils;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\Listener as PMListener;
+use pocketmine\event\player\PlayerCommandPreprocessEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use Exception;
 use pocketmine\utils\TextFormat;
-use function str_replace;
-use function time;
 use const PHP_INT_MAX;
+use function str_replace;
+use function strtr;
+use function time;
 
 class Listener implements PMListener {
     /** @var Main $plugin */
@@ -43,6 +44,7 @@ class Listener implements PMListener {
      * @priority HIGH
      */
     public function onChat(PlayerChatEvent $event): void{
+        //echo "\nPLAYER CHATTED\n";
         $player = $event->getPlayer();
         $msg = $event->getMessage();
         $handler = $this->plugin->getSessionHandler();
@@ -59,6 +61,7 @@ class Listener implements PMListener {
             if($isFiltered) {
                 if(!$silentConfig['filter']) {
                     $player->sendMessage(TextFormat::RED . "Please rephrase your sentence!");
+                    $event->setRecipients([$player]);
                     $event->setCancelled();
                     $this->broadcastToStaff($event);
                 } else
@@ -67,6 +70,7 @@ class Listener implements PMListener {
                 if(!$silentConfig['filter']) {
                     // It is safe to do getSoftMutedUntilHere because $session->isSoftMuted() would return false if it was null
                     $untilStr = Utils::time2str($until, 'ago', '');
+                    $event->setRecipients([$player]);
                     $event->setCancelled();
                     $player->sendMessage(TextFormat::RED . "You are soft muted! For: $untilStr");
                 } else
@@ -114,6 +118,7 @@ class Listener implements PMListener {
      * @param PlayerChatEvent $event
      */
     private function handleEvent(PlayerChatEvent $event): void{
+        echo "\nHERE\n";
         $player = $event->getPlayer();
         $event->setRecipients([$player]);
         $this->broadcastToStaff($event);
@@ -125,5 +130,13 @@ class Listener implements PMListener {
         $staffChat = $this->plugin->getServer()->getPluginManager()->getPlugin('StaffChat');
         if($staffChat !== null)
             $staffChat->pluginBroadcast($this->plugin->getName(), $event->getMessage(), str_replace('%player%', $event->getPlayer()->getName(), $this->config->get('Staff Chat Format')));
+        else {
+            $format = $this->config->get('Staff Chat Format');
+            foreach ($this->plugin->getServer()->getOnlinePlayers() as $player) {
+                if($player->hasPermission('staffchat'))
+                    $player->sendMessage(strtr($format, ['%player%' => $event->getPlayer()->getName(), '%plugin%' => $this->plugin->getName(), '%msg%' => $event->getMessage()]));
+            }
+        }
     }
+
 }
