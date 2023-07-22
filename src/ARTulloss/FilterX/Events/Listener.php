@@ -19,8 +19,8 @@ use pocketmine\event\Listener as PMListener;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
-use Exception;
 use pocketmine\utils\TextFormat;
+use Exception;
 use function time;
 use const PHP_INT_MAX;
 

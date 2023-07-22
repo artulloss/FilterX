@@ -9,12 +9,11 @@ declare(strict_types=1);
 
 namespace ARTulloss\FilterX;
 
-use ARTulloss\FilterX\libs\PASVL\Traverser\FailReport;
 use pocketmine\plugin\Plugin;
 use pocketmine\Server;
-use function strtolower;
 use Throwable;
 use Closure;
+use function strtolower;
 
 /**
  * Class Utils
@@ -92,15 +91,5 @@ class Utils {
             $hasLogger = $plugin !== null ? $plugin : Server::getInstance();
             $hasLogger->getLogger()->logException($error);
         };
-    }
-    static function outputFailReasons(Plugin $plugin, FailReport $report): void{
-        $logger = $plugin->getLogger();
-        $reason = $report->getReason();
-        if($reason->isKeyQuantityType())
-            $logger->error('Invalid key quantity found!');
-        if($reason->isKeyType())
-            $logger->error('Invalid key type found!');
-        if($reason->isValueType())
-            $logger->error('Invalid value type found!');
     }
 }

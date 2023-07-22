@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace ARTulloss\FilterX;
 
-use function arsort;
-use ARTulloss\FilterX\{Events\Listener,
-    libs\PASVL\Traverser\FailReport,
-    libs\PASVL\Traverser\VO\Traverser,
-    libs\PASVL\ValidatorLocator\ValidatorLocator,
+use ARTulloss\FilterX\{
+    Events\Listener,
     Queries\Queries,
-    Session\SessionHandler};
+    Session\SessionHandler
+};
+use PASVL\Validation\{
+    ValidatorBuilder,
+    Problems\ArrayFailedValidation,
+};
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use poggit\libasynql\DataConnector;
 use poggit\libasynql\libasynql;
 use RuntimeException;
 use function strtotime;
+use function arsort;
 
 class Main extends PluginBase {
 
@@ -40,32 +43,35 @@ class Main extends PluginBase {
             'soft_mute' => ':bool'
         ],
         'Infraction' => [
-            'Mode' => ':int :between(1,2)',
-            'Reset Every' => ':int', # seconds
+            'Mode' => ':number :int :between(1,2)',
+            'Reset Every' => ':number :int', # seconds
             'Punishments' => [
-                '*' => ':string :regexp(/^(?:[0-9]+ \)(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?\)$/i)'
+                // '*' => ':string :regexp(\'^([0-9]+ )(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$\i\')',
+                // ':number :int' => ':string :regexp(\'^[0-9]+ seconds?|minutes?|hours?|days?|weeks?|months?|years?$\')',
+                '*' => ':string',
             ]
         ]
     ];
-
+    
     private const DATABASE_PATTERN = [
-        'type' => ':string :regexp(/^(sqlite|mysql\)$/)',
-        'sqlite' => [
-            'file' => ':string :regexp(/^.*\.sqlite$/)'
+        'type' => ':string :in("sqlite","mysql")',
+        'sqlite?' => [
+            'file' => ':string :ends(".sqlite")'
         ],
         'mysql' => [
-            'host' => ':string :regexp(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\)\.\){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\)$/)',
+            'host' => ':string',
             'username' => ':string',
             'password' => ':string',
             'schema' => ':string'
         ],
-        'worker-limit' => ':int :min(1)'
+        'worker-limit' => ':number :int :min(1)'
     ];
 
     /**
      * @throws \Exception
      */
 	public function onEnable(): void{
+        new Autoloader();
 	    $this->saveDefaultConfigs();
 	    $this->startDatabase();
 	    $this->checkConfigsValid();
@@ -96,15 +102,15 @@ class Main extends PluginBase {
      * Check if the config is valid
      */
     public function checkConfigsValid(): void{
-        $traverser = new Traverser(new ValidatorLocator());
+        $cfgBuilder = ValidatorBuilder::forArray(self::CONFIG_PATTERN);
+        $dbBuilder = ValidatorBuilder::forArray(self::DATABASE_PATTERN);
         try {
             # TODO Maybe do this by file so it's easier to know which file is broken- but the configs are rather small...
-            $traverser->match(self::CONFIG_PATTERN, $this->getConfig()->getAll());
-            $traverser->match(self::DATABASE_PATTERN, $this->databaseConfig->getAll());
-        } catch (FailReport $report) {
+            $cfgBuilder->build()->validate($this->getConfig()->getAll());
+            $dbBuilder->build()->validate($this->databaseConfig->getAll());
+        } catch (ArrayFailedValidation $e) {
             $logger = $this->getLogger();
-            $logger->error('Invalid config detected! Reason:');
-            Utils::outputFailReasons($this, $report);
+            $logger->error('Invalid config detected! Reason: ' . $e->getMessage());
             $logger->error('Disabling...');
             $this->getServer()->getPluginManager()->disablePlugin($this);
         }
